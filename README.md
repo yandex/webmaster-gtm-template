@@ -42,7 +42,7 @@ Use manual setup only if you need to install the template from the repository ve
 
 The repository version uses the public helper script hosted at:
 
-`https://cdn.jsdelivr.net/gh/m1sh4xd/gtm-yandex@467fdc0c3ab3124a40ddf229fc8cd20392c71938/webmaster-verification.js`
+`https://cdn.jsdelivr.net/gh/yandex/webmaster-gtm-template@467fdc0c3ab3124a40ddf229fc8cd20392c71938/webmaster-verification.js`
 
 ## Verification after publish
 

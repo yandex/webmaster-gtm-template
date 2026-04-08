@@ -70,7 +70,7 @@ const setInWindow = require('setInWindow');
 
 const GLOBAL_NAMESPACE = 'yandexWebmasterVerification';
 const HELPER_SCRIPT_URL =
-    'https://cdn.jsdelivr.net/gh/m1sh4xd/gtm-yandex@467fdc0c3ab3124a40ddf229fc8cd20392c71938/webmaster-verification.js';
+    'https://cdn.jsdelivr.net/gh/yandex/webmaster-gtm-template@467fdc0c3ab3124a40ddf229fc8cd20392c71938/webmaster-verification.js';
 
 const verificationId = makeString(data.verificationId || '').trim();
 
@@ -174,7 +174,7 @@ ___WEB_PERMISSIONS___
             "listItem": [
               {
                 "type": 1,
-                "string": "https://cdn.jsdelivr.net/gh/m1sh4xd/gtm-yandex@467fdc0c3ab3124a40ddf229fc8cd20392c71938/webmaster-verification.js"
+                "string": "https://cdn.jsdelivr.net/gh/yandex/webmaster-gtm-template@467fdc0c3ab3124a40ddf229fc8cd20392c71938/webmaster-verification.js"
               }
             ]
           }
@@ -214,7 +214,7 @@ scenarios:
       token: 'abc123'
     }, true);
     assertThat(injectCalls).isEqualTo([
-      'https://cdn.jsdelivr.net/gh/m1sh4xd/gtm-yandex@467fdc0c3ab3124a40ddf229fc8cd20392c71938/webmaster-verification.js'
+      'https://cdn.jsdelivr.net/gh/yandex/webmaster-gtm-template@467fdc0c3ab3124a40ddf229fc8cd20392c71938/webmaster-verification.js'
     ]);
 
     assertApi('gtmOnSuccess').wasCalled();
@@ -252,7 +252,7 @@ scenarios:
       token: 'abc123'
     }, true);
     assertThat(injectCalls).isEqualTo([
-      'https://cdn.jsdelivr.net/gh/m1sh4xd/gtm-yandex@467fdc0c3ab3124a40ddf229fc8cd20392c71938/webmaster-verification.js'
+      'https://cdn.jsdelivr.net/gh/yandex/webmaster-gtm-template@467fdc0c3ab3124a40ddf229fc8cd20392c71938/webmaster-verification.js'
     ]);
 
     assertApi('gtmOnSuccess').wasCalled();
@@ -295,5 +295,4 @@ scenarios:
 ___NOTES___
 
 Created on 31.03.2026
-
 
