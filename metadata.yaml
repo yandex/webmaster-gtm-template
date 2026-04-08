@@ -15,5 +15,5 @@
 homepage: "https://webmaster.yandex.com/"
 documentation: "https://yandex.com/support/webmaster/en/service/rights"
 versions:
-  - sha: b21eb563c924d850791789cfc7faeb476e412343
-    changeNotes: Reworked for Yandex Webmaster site verification.
+  - sha: 10040c962438dfaeeeca4d26e4f623acb053ae3c
+    changeNotes: Initial release of the Yandex Webmaster verification template.
