@@ -61,16 +61,18 @@ ___TEMPLATE_PARAMETERS___
 ]
 
 
+
 ___SANDBOXED_JS_FOR_WEB_TEMPLATE___
 
 const injectScript = require('injectScript');
 const makeString = require('makeString');
 const queryPermission = require('queryPermission');
 const setInWindow = require('setInWindow');
+const copyFromWindow = require('copyFromWindow');
+const getType = require('getType');
 
 const GLOBAL_NAMESPACE = 'yandexWebmasterVerification';
-const HELPER_SCRIPT_URL =
-    'https://cdn.jsdelivr.net/gh/yandex/webmaster-gtm-template@467fdc0c3ab3124a40ddf229fc8cd20392c71938/webmaster-verification.js';
+const HELPER_SCRIPT_URL = 'https://cdn.jsdelivr.net/gh/yandex/webmaster-gtm-template@cc8bead2195157cf02650a02485ef44b1fa4a0c1/webmaster-verification.js';
 
 const verificationId = makeString(data.verificationId || '').trim();
 
@@ -85,7 +87,44 @@ if (!queryPermission('access_globals', 'readwrite', GLOBAL_NAMESPACE) ||
   return;
 }
 
-if (!setInWindow(GLOBAL_NAMESPACE, {token: verificationId}, true)) {
+const currentConfig = copyFromWindow(GLOBAL_NAMESPACE) || {};
+const tokens = [];
+
+const containsToken = function(token) {
+  for (let i = 0; i < tokens.length; i++) {
+    if (tokens[i] === token) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+const addToken = function(value) {
+  const token = makeString(value || '').trim();
+
+  if (token && !containsToken(token)) {
+    tokens.push(token);
+  }
+};
+
+if (getType(currentConfig.tokens) === 'array') {
+  for (let i = 0; i < currentConfig.tokens.length; i++) {
+    addToken(currentConfig.tokens[i]);
+  }
+}
+
+// Backward compatibility with the previous config format: { token: '...' }.
+if (getType(currentConfig.token) === 'string') {
+  addToken(currentConfig.token);
+}
+
+addToken(verificationId);
+
+if (!setInWindow(GLOBAL_NAMESPACE, {
+  token: verificationId,
+  tokens: tokens
+}, true)) {
   data.gtmOnFailure();
   return;
 }
@@ -94,7 +133,6 @@ injectScript(
     HELPER_SCRIPT_URL,
     data.gtmOnSuccess,
     data.gtmOnFailure);
-
 
 ___WEB_PERMISSIONS___
 
@@ -174,7 +212,7 @@ ___WEB_PERMISSIONS___
             "listItem": [
               {
                 "type": 1,
-                "string": "https://cdn.jsdelivr.net/gh/yandex/webmaster-gtm-template@467fdc0c3ab3124a40ddf229fc8cd20392c71938/webmaster-verification.js"
+                "string": "https://cdn.jsdelivr.net/gh/yandex/webmaster-gtm-template@cc8bead2195157cf02650a02485ef44b1fa4a0c1/webmaster-verification.js"
               }
             ]
           }
@@ -189,13 +227,88 @@ ___WEB_PERMISSIONS___
 ]
 
 
+
 ___TESTS___
 
 scenarios:
-- name: Injects helper script after setting verification ID
+- name: Injects helper script after setting first verification ID
   code: |-
     mock('queryPermission', function() {
       return true;
+    });
+
+    mock('copyFromWindow', function() {
+      return undefined;
+    });
+
+    let injectCalls = [];
+    mock('injectScript', function(url, onSuccess) {
+      injectCalls.push(url);
+      onSuccess();
+    });
+
+    const mockData = {
+      verificationId: 'abc123'
+    };
+
+    runCode(mockData);
+
+    assertApi('copyFromWindow').wasCalledWith('yandexWebmasterVerification');
+    assertApi('setInWindow').wasCalledWith('yandexWebmasterVerification', {
+      token: 'abc123',
+      tokens: ['abc123']
+    }, true);
+    assertThat(injectCalls).isEqualTo([
+      'https://cdn.jsdelivr.net/gh/yandex/webmaster-gtm-template@cc8bead2195157cf02650a02485ef44b1fa4a0c1/webmaster-verification.js'
+    ]);
+    assertApi('gtmOnSuccess').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+
+- name: Preserves existing tokens and appends new verification ID
+  code: |-
+    mock('queryPermission', function() {
+      return true;
+    });
+
+    mock('copyFromWindow', function() {
+      return {
+        token: 'legacy456',
+        tokens: ['abc123']
+      };
+    });
+
+    let injectCalls = [];
+    mock('injectScript', function(url, onSuccess) {
+      injectCalls.push(url);
+      onSuccess();
+    });
+
+    const mockData = {
+      verificationId: 'new789'
+    };
+
+    runCode(mockData);
+
+    assertApi('setInWindow').wasCalledWith('yandexWebmasterVerification', {
+      token: 'new789',
+      tokens: ['abc123', 'legacy456', 'new789']
+    }, true);
+    assertThat(injectCalls).isEqualTo([
+      'https://cdn.jsdelivr.net/gh/yandex/webmaster-gtm-template@cc8bead2195157cf02650a02485ef44b1fa4a0c1/webmaster-verification.js'
+    ]);
+    assertApi('gtmOnSuccess').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+
+- name: Does not duplicate existing verification ID
+  code: |-
+    mock('queryPermission', function() {
+      return true;
+    });
+
+    mock('copyFromWindow', function() {
+      return {
+        tokens: ['abc123']
+      };
     });
 
     let injectCalls = [];
@@ -211,14 +324,15 @@ scenarios:
     runCode(mockData);
 
     assertApi('setInWindow').wasCalledWith('yandexWebmasterVerification', {
-      token: 'abc123'
+      token: 'abc123',
+      tokens: ['abc123']
     }, true);
     assertThat(injectCalls).isEqualTo([
-      'https://cdn.jsdelivr.net/gh/yandex/webmaster-gtm-template@467fdc0c3ab3124a40ddf229fc8cd20392c71938/webmaster-verification.js'
+      'https://cdn.jsdelivr.net/gh/yandex/webmaster-gtm-template@cc8bead2195157cf02650a02485ef44b1fa4a0c1/webmaster-verification.js'
     ]);
-
     assertApi('gtmOnSuccess').wasCalled();
     assertApi('gtmOnFailure').wasNotCalled();
+
 - name: Fails when verification ID is empty
   code: |-
     const mockData = {
@@ -227,13 +341,20 @@ scenarios:
 
     runCode(mockData);
 
+    assertApi('copyFromWindow').wasNotCalled();
+    assertApi('setInWindow').wasNotCalled();
     assertApi('injectScript').wasNotCalled();
     assertApi('gtmOnSuccess').wasNotCalled();
     assertApi('gtmOnFailure').wasCalled();
+
 - name: Trims whitespace around verification ID
   code: |-
     mock('queryPermission', function() {
       return true;
+    });
+
+    mock('copyFromWindow', function() {
+      return undefined;
     });
 
     let injectCalls = [];
@@ -243,20 +364,21 @@ scenarios:
     });
 
     const mockData = {
-      verificationId: '  abc123  '
+      verificationId: ' abc123 '
     };
 
     runCode(mockData);
 
     assertApi('setInWindow').wasCalledWith('yandexWebmasterVerification', {
-      token: 'abc123'
+      token: 'abc123',
+      tokens: ['abc123']
     }, true);
     assertThat(injectCalls).isEqualTo([
-      'https://cdn.jsdelivr.net/gh/yandex/webmaster-gtm-template@467fdc0c3ab3124a40ddf229fc8cd20392c71938/webmaster-verification.js'
+      'https://cdn.jsdelivr.net/gh/yandex/webmaster-gtm-template@cc8bead2195157cf02650a02485ef44b1fa4a0c1/webmaster-verification.js'
     ]);
-
     assertApi('gtmOnSuccess').wasCalled();
     assertApi('gtmOnFailure').wasNotCalled();
+
 - name: Fails when helper script injection is not permitted
   code: |-
     mock('queryPermission', function(permission) {
@@ -269,14 +391,22 @@ scenarios:
 
     runCode(mockData);
 
+    assertApi('copyFromWindow').wasNotCalled();
+    assertApi('setInWindow').wasNotCalled();
     assertApi('injectScript').wasNotCalled();
     assertApi('gtmOnSuccess').wasNotCalled();
     assertApi('gtmOnFailure').wasCalled();
-- name: Fails when token cannot be saved to window
+
+- name: Fails when tokens cannot be saved to window
   code: |-
     mock('queryPermission', function() {
       return true;
     });
+
+    mock('copyFromWindow', function() {
+      return undefined;
+    });
+
     mock('setInWindow', function() {
       return false;
     });
@@ -290,7 +420,6 @@ scenarios:
     assertApi('injectScript').wasNotCalled();
     assertApi('gtmOnSuccess').wasNotCalled();
     assertApi('gtmOnFailure').wasCalled();
-
 
 ___NOTES___
 

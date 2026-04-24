@@ -11,8 +11,9 @@ This template does one thing only: it adds the Yandex Webmaster verification met
 ## What is inside
 
 - One input field: `Webmaster verification ID`.
-- One helper script that creates or updates `meta[name="yandex-verification"]` in `head`.
-- Duplicate protection: if the meta tag already exists in `head`, the script reuses it.
+- One helper script that adds `meta[name="yandex-verification"]` tags to `head`.
+- Duplicate protection: if a meta tag with the same verification ID already exists in `head`, the script does not add it again.
+- Multiple verification IDs are supported: different IDs are added as separate meta tags.
 
 ## Install from GTM Gallery
 
@@ -42,7 +43,7 @@ Use manual setup only if you need to install the template from the repository ve
 
 The repository version uses the public helper script hosted at:
 
-`https://cdn.jsdelivr.net/gh/yandex/webmaster-gtm-template@467fdc0c3ab3124a40ddf229fc8cd20392c71938/webmaster-verification.js`
+`https://cdn.jsdelivr.net/gh/yandex/webmaster-gtm-template@cc8bead2195157cf02650a02485ef44b1fa4a0c1/webmaster-verification.js`
 
 ## Verification after publish
 
@@ -51,7 +52,7 @@ The repository version uses the public helper script hosted at:
 3. If verification fails, check that the same token is used and that the tag is present on the canonical homepage URL.
 4. If needed, verify in browser DevTools:
    ```js
-   document.head.querySelector('meta[name="yandex-verification"]')?.outerHTML
+   Array.from(document.head.querySelectorAll('meta[name="yandex-verification"]')).map(function(meta) { return meta.outerHTML; })
    ```
 
 ## Repository Files
