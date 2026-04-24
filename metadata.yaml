@@ -15,5 +15,9 @@
 homepage: "https://webmaster.yandex.com/"
 documentation: "https://yandex.com/support/webmaster/en/service/rights"
 versions:
+- sha: 9222c8be3414f8c81f2331dc521926cec3a3a899
+  changeNotes: |2
+    Support multiple Yandex Webmaster verification IDs on the same page.
+    Prevent existing yandex-verification meta tags from being overwritten.
   - sha: 10040c962438dfaeeeca4d26e4f623acb053ae3c
     changeNotes: Initial release of the Yandex Webmaster verification template.
